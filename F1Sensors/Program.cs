@@ -6,10 +6,14 @@ using System.Threading.Tasks;
 
 namespace F1Sensors
 {
-    internal class Program
+    class Program
     {
         static void Main(string[] args)
         {
+
+
+
+            Console.ReadKey();
         }
     }
 }
