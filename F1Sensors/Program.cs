@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace F1Sensors
-{
+{  
     class Program
     {     
         static void Main(string[] args)
