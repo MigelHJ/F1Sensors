@@ -14,6 +14,7 @@ namespace SensorSystem
 
     public class SelectedMenu
     {
+        public event ButtonPressedEventHandler ButtonPressed;
         private List<Sensor> meresek = new List<Sensor>();
         public string menuDisplayName { get; set; }
         public string menuDescription { get; set; }
@@ -26,11 +27,33 @@ namespace SensorSystem
             this.menuDescription = menudescription;
             this.menuText = menutext;            
             this.menuIndex = menuindex;
+            ButtonPressed += this.OnButtonPressed;
+
+        }
+
+        public void selectedMenuRunning(List<Sensor> lista)
+        {
+            ButtonPressed += this.OnButtonPressed;
+
+          
+            SelectedMenuKiir(lista);
+           
+
+            bool running = true;
+            while (running)
+            {
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(intercept: true).Key;
+                    ButtonPressed.Invoke(key, EventArgs.Empty);
+                }
+                Thread.Sleep(100);
+            }
         }
 
         public void SelectedMenuKiir(List<Sensor> lista)
         {
-            meresek = lista;
+            meresek = lista;            
             Console.WriteLine($"Kiválasztott menü: {this.menuDisplayName}");            
             switch (menuIndex)
             {
@@ -82,12 +105,12 @@ namespace SensorSystem
         
         private List<Sensor> GenerateBrakeSensorData() 
         { 
-            List<Sensor> sensors = new List<Sensor> 
+            List<Sensor> fek = new List<Sensor> 
             { 
                 new Brake("B1", "Féknyomás_mérő", Brake.MeasureBrakePressure(), "50-200", "Bar", "Brake System"), 
                 new Brake("B2", "Hőmérséklet_mérő", Brake.MeasureBrakeTemperature(), "100-500", "°C", "Brake System") 
             }; 
-            foreach (var sensor in sensors) 
+            foreach (var sensor in fek) 
             { 
                 if (sensor is Brake brake) 
                 {
@@ -105,18 +128,18 @@ namespace SensorSystem
                     }
                 } 
             }
-            return sensors;
+            return fek;
         }
         
         private List<Sensor> GenerateTyreSensorData()
         {
-            List<Sensor> sensors = new List<Sensor>
+            List<Sensor> kerekek = new List<Sensor>
             {
                 new Tyre("T1", "Hőmérséklet_mérő", Tyre.MeasureTemperature(), "50-120", "°C", "Front Left"),
                 new Tyre("T2", "Keréknyomás_mérő", Tyre.MeasurePressure(), "20-35", "PSI", "Front Right"),
                 new Tyre("T3", "Kopás_érzékelő", Tyre.MeasureWear(), "0-100", "%", "Rear Left")
             };
-            foreach (var sensor in sensors)
+            foreach (var sensor in kerekek)
             {
                 if (sensor is Tyre tyre)
                 {
@@ -137,10 +160,10 @@ namespace SensorSystem
                     }
                 }
             }
-            return sensors;
+            return kerekek;
         }
 
-        public virtual void HandleSelectedMenuInput(object sender, EventArgs e)
+        public virtual void OnButtonPressed(object sender, EventArgs e)
         {
             switch (sender)
             {
@@ -151,6 +174,7 @@ namespace SensorSystem
                 case ConsoleKey.Escape:     //program leállítása
                     Console.Clear();
                     MainMenu menu = new MainMenu(meresek);
+                    ButtonPressed -= this.OnButtonPressed;
                     menu.MainMenuRunning();
                     break;            
             }
@@ -198,18 +222,21 @@ namespace SensorSystem
         {
             ButtonPressed += this.OnButtonPressed;
 
-            DisplayMenu();
+            if (!inSelectedMenu)
+            {
+                DisplayMenu();
+            }
 
-            bool running = true;            
+            bool running = true;
             while (running)
-            {                
+            {
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(intercept: true).Key;
-                    ButtonPressed.Invoke(key, EventArgs.Empty);                    
+                    ButtonPressed.Invoke(key, EventArgs.Empty);
                 }
                 Thread.Sleep(100);
-            }            
+            }
         }
         
         private void DisplayMenu()
@@ -230,7 +257,10 @@ namespace SensorSystem
                     Console.WriteLine(menu.menuDisplayName);
                 }
             }
-            Console.WriteLine(meresek.Count());
+            foreach (var i in meresek)
+            {
+                Console.WriteLine($"{i.szenzorAzon}\t{i.szenzorTípus}\t{i.szenzorErtek}\t{i.mertekEgyseg}");
+            }
         }
 
         private void FellepesMenu()
@@ -264,45 +294,39 @@ namespace SensorSystem
             Thread.Sleep(1000);
         }
         
-        protected virtual void OnButtonPressed(object sender, EventArgs e)
+        public void OnButtonPressed(object sender, EventArgs e)
         {
-            if(inSelectedMenu)
-            {
-                selectedMenus[currentSelectedMenuIndex].HandleSelectedMenuInput(sender, e);
-            }
-            else
-            {
-                switch (sender)
-                {
-                    case ConsoleKey.Enter:      //menü választás
-                        Console.Clear();
-                        inSelectedMenu = true;                        
-                        selectedMenus[currentSelectedMenuIndex].SelectedMenuKiir(meresek);                       
-                        break;
-                    case ConsoleKey.Escape:     //program leállítása
-                        Console.Clear();
-                        Console.WriteLine("Program befejezve.");
-                        Thread.Sleep(1000);
-                        Environment.Exit(0);
-                        break;
-                    case ConsoleKey.UpArrow:    //fellépés egy menüvel
-                        FellepesMenu();
-                        break;
-                    case ConsoleKey.W:
-                        FellepesMenu();
-                        break;
-                    case ConsoleKey.DownArrow:  //lelépés egy menüvel
-                        LelepesMenu();
-                        break;
-                    case ConsoleKey.S:
-                        LelepesMenu();
-                        break;
-                    default:                    //Hibás gombnyomás
-                        HibasGomb();
-                        MainMenuRunning();
-                        break;
-                }
-            }            
+           switch (sender)
+           {
+                case ConsoleKey.Enter:      //menü választás
+                    Console.Clear();
+                    ButtonPressed -= this.OnButtonPressed;
+                    selectedMenus[currentSelectedMenuIndex].selectedMenuRunning(meresek);
+                    break;
+                case ConsoleKey.Escape:     //program leállítása
+                    Console.Clear();
+                    Console.WriteLine("Program befejezve.");
+                    Thread.Sleep(1000);
+                    Environment.Exit(0);
+                    break;
+                case ConsoleKey.UpArrow:    //fellépés egy menüvel
+                    FellepesMenu();
+                    break;
+                case ConsoleKey.W:
+                    FellepesMenu();
+                    break;
+                case ConsoleKey.DownArrow:  //lelépés egy menüvel
+                    LelepesMenu();
+                    break;
+                case ConsoleKey.S:
+                    LelepesMenu();
+                    break;
+                default:                    //Hibás gombnyomás
+                    HibasGomb();
+                    MainMenuRunning();
+                    break;
+           }
+                       
         }
     }
 
