@@ -34,9 +34,9 @@ namespace SensorSystem
         public void selectedMenuRunning(List<Sensor> lista)
         {
             ButtonPressed += this.OnButtonPressed;
-
+            meresek = lista;
           
-            SelectedMenuKiir(lista);
+            SelectedMenuKiir();
            
 
             bool running = true;
@@ -51,9 +51,8 @@ namespace SensorSystem
             }
         }
 
-        public void SelectedMenuKiir(List<Sensor> lista)
-        {
-            meresek = lista;            
+        public void SelectedMenuKiir()
+        {                       
             Console.WriteLine($"Kiválasztott menü: {this.menuDisplayName}");            
             switch (menuIndex)
             {
@@ -169,7 +168,7 @@ namespace SensorSystem
             {
                 case ConsoleKey.Enter:      //menü választás
                     Console.Clear();
-                    SelectedMenuKiir(meresek);
+                    SelectedMenuKiir();
                     break;
                 case ConsoleKey.Escape:     //program leállítása
                     Console.Clear();
@@ -257,10 +256,7 @@ namespace SensorSystem
                     Console.WriteLine(menu.menuDisplayName);
                 }
             }
-            foreach (var i in meresek)
-            {
-                Console.WriteLine($"{i.szenzorAzon}\t{i.szenzorTípus}\t{i.szenzorErtek}\t{i.mertekEgyseg}");
-            }
+            Console.WriteLine(meresek.Count());
         }
 
         private void FellepesMenu()
