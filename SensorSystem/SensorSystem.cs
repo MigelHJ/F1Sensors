@@ -110,6 +110,14 @@ namespace SensorSystem
             switch (sender)
             {
                 case ConsoleKey.Enter:      //menü választás
+                    if (currentSelectedMenuIndex == 0) //  RPM menü
+                    {
+                        Console.WriteLine($"RPM érték: {engineSensor.revRPM()}");
+                    }
+                    else if (currentSelectedMenuIndex == 1) // Olajnyomás menü
+                    {
+                        Console.WriteLine($"Olajnyomás érték: {brakeSensor.MeasureBrakePressure()}");
+                    }
                     break;
                 case ConsoleKey.Escape:     //program leállítása
                     Console.Clear();
@@ -160,6 +168,31 @@ namespace SensorSystem
             szenzorHely = szH;
         }
     }
+
+
+        public class SensorNetwork
+        {
+            private List<Sensor> sensors;
+
+            public SensorNetwork()
+            {
+                sensors = new List<Sensor>();
+            }
+
+            public void AddSensor(Sensor sensor)
+            {
+                sensors.Add(sensor);
+            }
+
+            public void SimulateSensors()
+            {
+                foreach (var sensor in sensors)
+                {
+                    Console.WriteLine($"Szenzor: {sensor.szenzorAzon}, Típus: {sensor.szenzorTípus}, Érték: {sensor.szenzorErtek}");
+                }
+            }
+        }
+
 
     public class Engine : Sensor    // RPM, Hűtőfolyadék hőmérséklet érzékelő, Olajnyomás érzékelő
     {
@@ -221,14 +254,105 @@ namespace SensorSystem
     }
 
 
-    //public class Brake : Sensor     // Féknyomás, fékhőmérséklet, fékerő
-    //{
+       public class Brake : Sensor // Féknyomás, fékhőmérséklet
+        {
+            public Brake(string szA, string szTip, string szErt, string szErtTar, string mE, string szH) : base(szA, szTip, szErt, szErtTar, mE, szH)
+            {
+            }
 
-    //}
+            public int MeasureBrakePressure()
+            {
+                if (this.szenzorTípus != "Féknyomás_mérő")
+                {
+                    Console.WriteLine("Nem lehetséges a féknyomás mérése.");
+                    return 0;
+                }
 
-    //public class Tyre : Sensor // Gumihőmérséklet, Keréknyomás-érzékelő, Kopásérzékelő
-    //{
+                Random rng = new Random();
+                return rng.Next(50, 200); // Barban a nyomás
+            }
 
-    //}
+            public int MeasureBrakeTemperature()
+            {
+                if (this.szenzorTípus != "Hőmérséklet_mérő")
+                {
+                    Console.WriteLine("Nem lehetséges a fékhőmérséklet mérése.");
+                    return 0;
+                }
+
+                Random rng = new Random();
+                return rng.Next(100, 500); // °C
+            }
+        }
+
+     public class Tyre : Sensor // Gumihőmérséklet, Keréknyomás-érzékelő, Kopásérzékelő
+    {
+        public Tyre(string szA, string szTip, string szErt, string szErtTar, string mE, string szH) : base(szA, szTip, szErt, szErtTar, mE, szH)
+        {
+        }
+
+        public int MeasureTemperature()
+        {
+            try
+            {
+                if (this.szenzorTípus == "Hőmérséklet_mérő")
+                {
+                    Random rng = new Random();
+                    return rng.Next(50, 120); //  °C
+                }
+                else
+                {
+                    throw new Exception("Nem lehetséges a hőmérséklet mérése.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+
+        public int MeasurePressure()
+        {
+            try
+            {
+                if (this.szenzorTípus == "Keréknyomás_mérő")
+                {
+                    Random rng = new Random();
+                    return rng.Next(20, 35); // PSI-ben
+                }
+                else
+                {
+                    throw new Exception("Nem lehetséges a keréknyomás mérése.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+
+        public int MeasureWear()
+        {
+            try
+            {
+                if (this.szenzorTípus == "Kopás_érzékelő")
+                {
+                    Random rng = new Random();
+                    return rng.Next(0, 100); // Kopás %
+                }
+                else
+                {
+                    throw new Exception("Nem lehetséges a gumi kopásának mérése.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+    }
     #endregion
 }
