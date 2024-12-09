@@ -47,7 +47,7 @@ namespace SensorSystem
                     var key = Console.ReadKey(intercept: true).Key;
                     ButtonPressed.Invoke(key, EventArgs.Empty);
                 }
-                Thread.Sleep(100);
+                Thread.Sleep(800);
             }
         }
 
@@ -168,7 +168,7 @@ namespace SensorSystem
             {
                 case ConsoleKey.Enter:      //menü választás
                     Console.Clear();
-                    SelectedMenuKiir();
+                    selectedMenuRunning(meresek);
                     break;
                 case ConsoleKey.Escape:     //program leállítása
                     Console.Clear();
