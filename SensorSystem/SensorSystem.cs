@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.IO;
+using System.Xml;
 
 namespace SensorSystem
 {    
@@ -64,6 +66,9 @@ namespace SensorSystem
                     break;
                 case 2:
                     meresek.AddRange(GenerateTyreSensorData());
+                    break;
+                case 4:
+                    saveToXMl(meresek);
                     break;
                 default:
                     break;
@@ -168,7 +173,7 @@ namespace SensorSystem
             {
                 case ConsoleKey.Enter:      //menü választás
                     Console.Clear();
-                    SelectedMenuKiir();
+                    selectedMenuRunning(meresek);
                     break;
                 case ConsoleKey.Escape:     //program leállítása
                     Console.Clear();
@@ -178,6 +183,82 @@ namespace SensorSystem
                     break;            
             }
             
+        }
+
+        public void saveToXMl(List<Sensor> lista)
+        {
+            try
+            {
+                XmlTextWriter writer;
+                string filePath = "meresek.xml";
+
+                if (File.Exists(filePath))
+                {
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(filePath);
+
+                    XmlNode root = doc.DocumentElement;
+                    if (root == null)
+                    {
+                        throw new InvalidOperationException("Az XML fájl gyökéreleme hiányzik.");
+                    }
+
+                    foreach (var item in lista)
+                    {
+                        XmlElement szenzorElem = doc.CreateElement(item.szenzorTípus);
+                        szenzorElem.SetAttribute("azon", item.szenzorAzon.ToString());
+
+                        XmlElement ertekElem = doc.CreateElement("ertek");
+                        ertekElem.InnerText = item.szenzorErtek.ToString();
+                        szenzorElem.AppendChild(ertekElem);
+
+                        XmlElement tartomanyElem = doc.CreateElement("tartomany");
+                        tartomanyElem.InnerText = item.szenzorErtekTartomany.ToString();
+                        szenzorElem.AppendChild(tartomanyElem);
+
+                        XmlElement mertekElem = doc.CreateElement("mertekegyseg");
+                        mertekElem.InnerText = item.mertekEgyseg;
+                        szenzorElem.AppendChild(mertekElem);
+
+                        XmlElement helyElem = doc.CreateElement("hely");
+                        helyElem.InnerText = item.szenzorHely;
+                        szenzorElem.AppendChild(helyElem);
+
+                        root.AppendChild(szenzorElem);
+                    }
+
+                    doc.Save(filePath);
+                }
+                else
+                {
+                    // Ha a fájl nem létezik, új fájlt hozunk létre
+                    writer = new XmlTextWriter(filePath, Encoding.UTF8)
+                    {
+                        Formatting = Formatting.Indented
+                    };
+                    writer.WriteStartDocument(true);
+                    writer.WriteStartElement("Szenzorok");
+
+                    foreach (var item in lista)
+                    {
+                        writer.WriteStartElement($"{item.szenzorTípus}");
+                        writer.WriteAttributeString("azon", $"{item.szenzorAzon}");
+                        writer.WriteElementString("ertek", $"{item.szenzorErtek}");
+                        writer.WriteElementString("tartomany", $"{item.szenzorErtekTartomany}");
+                        writer.WriteElementString("mertekegyseg", $"{item.mertekEgyseg}");
+                        writer.WriteElementString("hely", $"{item.szenzorHely}");
+                        writer.WriteEndElement();
+                    }
+
+                    writer.WriteEndElement();
+                    writer.Flush();
+                    writer.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Hiba történt az XML fájl írása során: {ex.Message}");
+            }
         }
     }
 
