@@ -7,6 +7,7 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Xml;
+using Newtonsoft.Json;
 
 namespace SensorSystem
 {    
@@ -66,6 +67,9 @@ namespace SensorSystem
                     break;
                 case 2:
                     meresek.AddRange(GenerateTyreSensorData());
+                    break;
+                case 3:
+                    saveToJSON(meresek);
                     break;
                 case 4:
                     saveToXMl(meresek);
@@ -166,25 +170,7 @@ namespace SensorSystem
             }
             return kerekek;
         }
-
-        public virtual void OnButtonPressed(object sender, EventArgs e)
-        {
-            switch (sender)
-            {
-                case ConsoleKey.Enter:      //menü választás
-                    Console.Clear();
-                    selectedMenuRunning(meresek);
-                    break;
-                case ConsoleKey.Escape:     //program leállítása
-                    Console.Clear();
-                    MainMenu menu = new MainMenu(meresek);
-                    ButtonPressed -= this.OnButtonPressed;
-                    menu.MainMenuRunning();
-                    break;            
-            }
-            
-        }
-
+        
         public void saveToXMl(List<Sensor> lista)
         {
             try
@@ -234,7 +220,7 @@ namespace SensorSystem
                     // Ha a fájl nem létezik, új fájlt hozunk létre
                     writer = new XmlTextWriter(filePath, Encoding.UTF8)
                     {
-                        Formatting = Formatting.Indented
+                        Formatting = System.Xml.Formatting.Indented
                     };
                     writer.WriteStartDocument(true);
                     writer.WriteStartElement("Szenzorok");
@@ -259,6 +245,41 @@ namespace SensorSystem
             {
                 Console.WriteLine($"Hiba történt az XML fájl írása során: {ex.Message}");
             }
+        }
+
+        public void saveToJSON(List<Sensor> lista)
+        {
+            try
+            {
+                StreamWriter sw = new StreamWriter("meresek.json");
+                string json = JsonConvert.SerializeObject(lista, Newtonsoft.Json.Formatting.Indented);
+                sw.WriteLine(json);
+                sw.Flush();
+                sw.Close();
+                Console.WriteLine("Sikeresen kiíratás történt!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Hiba történt az Json fájl írása során: {ex.Message}");
+            }
+        }
+
+        public virtual void OnButtonPressed(object sender, EventArgs e)
+        {
+            switch (sender)
+            {
+                case ConsoleKey.Enter:      //menü választás
+                    Console.Clear();
+                    selectedMenuRunning(meresek);
+                    break;
+                case ConsoleKey.Escape:     //program leállítása
+                    Console.Clear();
+                    MainMenu menu = new MainMenu(meresek);
+                    ButtonPressed -= this.OnButtonPressed;
+                    menu.MainMenuRunning();
+                    break;            
+            }
+            
         }
     }
 
@@ -291,7 +312,7 @@ namespace SensorSystem
             selectedMenus[1] = new SelectedMenu("Fék Szenzor Értékek", "Itt tudod a legenerált a fék szenzorok értékét megnézni!", "", 1);
             selectedMenus[2] = new SelectedMenu("Kerék Szenzor Értékek", "Itt tudod a legenerált a kerék szenzorok értékét megnézni!", "", 2);
             selectedMenus[3] = new SelectedMenu("JSON fájlba kiíratás", "Itt tudod kiíratni az eddigi mérés adatait .json fájlba!", "", 3);
-            selectedMenus[4] = new SelectedMenu("Adatbázisba helyezés", "Itt tudod a legenerált méréseket adatbázisba helyezni!", "", 4);
+            selectedMenus[4] = new SelectedMenu("Adatbázisba helyezés", "Itt tudod a legenerált méréseket adatbázisba helyezni!(XML)", "", 4);
             selectedMenus[5] = new SelectedMenu("LINQ lekérdezések", "Itt tudod megnézni az előre megírt LINQ-s lekérdezéseket!", "", 5);
             currentSelectedMenuIndex = 0;
             inSelectedMenu = false;
@@ -430,7 +451,6 @@ namespace SensorSystem
             szenzorHely = szH;
         }
     }
-
 
     public class Engine : Sensor    // RPM, Hűtőfolyadék hőmérséklet érzékelő, Olajnyomás érzékelő
     {
