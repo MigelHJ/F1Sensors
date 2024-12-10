@@ -74,6 +74,9 @@ namespace SensorSystem
                 case 4:
                     saveToXMl(meresek);
                     break;
+                case 5:
+                    lekerdezesekLINQ(meresek);
+                    break;
                 default:
                     break;
             }
@@ -264,6 +267,55 @@ namespace SensorSystem
             }
         }
 
+        public void lekerdezesekLINQ(List<Sensor> lista)
+        {
+            try
+            {
+                Console.WriteLine("Az összes méréseket kiírja.");
+                var osszes = lista.Select(x => x).ToList();
+                foreach (var i in osszes)
+                {
+                    Console.Write(i.ToString() + "\n");
+                }
+                Console.WriteLine();
+
+                Console.WriteLine("Azok a szenzorokat listázza ki amik hőmérsékletett mérnek.");
+                var temperatureSensors = from szenzor in lista
+                             where szenzor.mertekEgyseg == "°C"
+                             select szenzor;
+                foreach (var i in temperatureSensors)
+                {
+                    Console.Write(i.ToString() + "\n");
+                }
+                Console.WriteLine();
+
+                Console.WriteLine("Azok a szenzorokat listázza ki ahol a gumikopás nagyobb, mint 60%");
+                var gumikopas = from szenzor in lista
+                                where szenzor.mertekEgyseg == "%" 
+                                && Convert.ToInt32(szenzor.szenzorErtek) > 60
+                                select szenzor;
+                foreach (var i in gumikopas)
+                {
+                    Console.Write(i.ToString() + "\n");
+                }
+                Console.WriteLine();
+
+                Console.WriteLine("Kijelzi a fék átlaghőmérsékletét mérések szerinti.");
+                var átlag =     
+                    (from szenzor in lista
+                    where szenzor.szenzorTípus == "Hőmérséklet_mérő"
+                    && szenzor.szenzorHely == "Brake System"
+                    select Convert.ToDouble(szenzor.szenzorErtek)).Average();
+                
+                Console.WriteLine($"{átlag:F00} °C az átlag hőmérséklet");
+                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Hiba történt a lekérdezések során: {ex.Message}");
+            }
+        }
+
         public virtual void OnButtonPressed(object sender, EventArgs e)
         {
             switch (sender)
@@ -300,7 +352,7 @@ namespace SensorSystem
             selectedMenus[2] = new SelectedMenu("Kerék Szenzor Értékek", "Itt tudod a legenerált a kerék szenzorok értékét megnézni!", "", 2);
             selectedMenus[3] = new SelectedMenu("JSON fájlba kiíratás", "Itt tudod kiíratni az eddigi mérés adatait .json fájlba!", "", 3);
             selectedMenus[4] = new SelectedMenu("Adatbázisba helyezés", "Itt tudod a legenerált méréseket adatbázisba helyezni!", "", 4);
-            selectedMenus[5] = new SelectedMenu("LINQ lh7ekérdezések", "Itt tudod megnézni az előre megírt LINQ-s lekérdezéseket!", "", 5);
+            selectedMenus[5] = new SelectedMenu("LINQ lekérdezések", "Itt tudod megnézni az előre megírt LINQ-s lekérdezéseket!", "", 5);
             currentSelectedMenuIndex = 0;
             inSelectedMenu = false;
         }
@@ -358,7 +410,7 @@ namespace SensorSystem
                     Console.WriteLine(menu.menuDisplayName);
                 }
             }
-            Console.WriteLine(meresek.Count());
+            Console.WriteLine($"\nA lista elemeinek a száma: {meresek.Count()}");
         }
 
         private void FellepesMenu()
@@ -450,6 +502,11 @@ namespace SensorSystem
             mertekEgyseg = mE;
             szenzorHely = szH;
         }
+
+        public override string ToString()
+        {
+            return $"{szenzorAzon}\t{szenzorTípus}\t{szenzorErtek} {mertekEgyseg}\t{szenzorErtekTartomany}\t{szenzorHely}";
+        }
     }
 
     public class Engine : Sensor    // RPM, Hűtőfolyadék hőmérséklet érzékelő, Olajnyomás érzékelő
@@ -505,7 +562,7 @@ namespace SensorSystem
         public static int MeasureBrakeTemperature()
         {
             Random rng = new Random();
-            return rng.Next(100, 500); // °C
+            return rng.Next(100, 1000); // °C
         }
     }
 
