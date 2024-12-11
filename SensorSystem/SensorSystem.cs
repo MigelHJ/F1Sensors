@@ -8,6 +8,9 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Xml;
 using Newtonsoft.Json;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
 
 namespace SensorSystem
 {    
@@ -76,6 +79,9 @@ namespace SensorSystem
                     break;
                 case 5:
                     lekerdezesekLINQ(meresek);
+                    break;
+                case 6:
+                    mentesAdatbazisba(meresek);
                     break;
                 default:
                     break;
@@ -316,6 +322,81 @@ namespace SensorSystem
             }
         }
 
+        public void mentesAdatbazisba(List<Sensor> lista)
+        {
+            List<Sensor> adatb = new List<Sensor>();
+            try
+            {
+                string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;" +
+                "AttachDbFilename=C:\\Users\\vorak\\Source\\Repos\\MigelHJ\\F1Sensors\\F1Sensors\\Meresek.mdf;" +
+                "Integrated Security=True";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = "select * from meresek";
+                    SqlCommand command = new SqlCommand(query, connection);
+
+                    SqlDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            if (reader["szenzorAzon"].ToString().Contains('E'))
+                            {
+                                adatb.Add(new Engine(reader["szenzorAzon"].ToString(), reader["szenzorTípus"].ToString(), Convert.ToInt32(reader["szenzorErtek"]), reader["szenzorErtekTartomany"].ToString(), reader["mertekEgyseg"].ToString(), reader["szenzorHely"].ToString()));
+                            }
+                            else if (reader["szenzorAzon"].ToString().Contains('B'))
+                            {
+                                adatb.Add(new Brake(reader["szenzorAzon"].ToString(), reader["szenzorTípus"].ToString(), Convert.ToInt32(reader["szenzorErtek"]), reader["szenzorErtekTartomany"].ToString(), reader["mertekEgyseg"].ToString(), reader["szenzorHely"].ToString()));
+                            }
+                            else if (reader["szenzorAzon"].ToString().Contains('T'))
+                            {
+                                adatb.Add(new Tyre(reader["szenzorAzon"].ToString(), reader["szenzorTípus"].ToString(), Convert.ToInt32(reader["szenzorErtek"]), reader["szenzorErtekTartomany"].ToString(), reader["mertekEgyseg"].ToString(), reader["szenzorHely"].ToString()));
+                            }
+                        }
+                    }
+                }
+
+                List<Sensor> kilista = new List<Sensor>();
+                foreach (var x in lista)
+                {
+                    bool bennevan = false;
+                    foreach (var y in adatb)
+                    {
+                        if (x.ToString() == y.ToString())
+                        {
+                            bennevan= true;
+                            break;
+                        }
+                    }
+                    if (!bennevan)
+                    {
+                        kilista.Add(x);
+                    }
+                }
+
+                string query2 = "INSERT INTO Sensors (szenzorAzon, szenzorTipus, szenzorErtek, szenzorErtekTartomany, mertekEgyseg, szenzorHely) " + "VALUES (@szenzorAzon, @szenzorTipus, @szenzorErtek, @szenzorErtekTartomany, @mertekEgyseg, @szenzorHely)";
+
+                foreach (var i in kilista)
+                {
+                    using (SqlCommand command2 = new SqlCommand(query2, new SqlConnection(connectionString)))
+                    {
+                        command2.Parameters.AddWithValue("@szenzorAzon", i.szenzorAzon);
+                        command2.Parameters.AddWithValue("@szenzorTipus", i.szenzorTípus);
+                        command2.Parameters.AddWithValue("@szenzorErtek", i.szenzorErtek);
+                        command2.Parameters.AddWithValue("@szenzorErtekTartomany", i.szenzorErtekTartomany);
+                        command2.Parameters.AddWithValue("@mertekEgyseg", i.mertekEgyseg);
+                        command2.Parameters.AddWithValue("@szenzorHely", i.szenzorHely);
+                    }
+                }                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Hiba történt a lekérdezések során: {ex.Message}");
+            }
+        }
+
         public virtual void OnButtonPressed(object sender, EventArgs e)
         {
             switch (sender)
@@ -344,31 +425,27 @@ namespace SensorSystem
         private int currentSelectedMenuIndex;
         private bool inSelectedMenu;
 
-        public MainMenu()
-        {            
-            selectedMenus = new SelectedMenu[6];
-            selectedMenus[0] = new SelectedMenu("Motor Szenzor Értékek","Itt tudod a legenerált a motor szenzorok értékét megnézni!", "",0);
-            selectedMenus[1] = new SelectedMenu("Fék Szenzor Értékek", "Itt tudod a legenerált a fék szenzorok értékét megnézni!", "", 1);
-            selectedMenus[2] = new SelectedMenu("Kerék Szenzor Értékek", "Itt tudod a legenerált a kerék szenzorok értékét megnézni!", "", 2);
-            selectedMenus[3] = new SelectedMenu("JSON fájlba kiíratás", "Itt tudod kiíratni az eddigi mérés adatait .json fájlba!", "", 3);
-            selectedMenus[4] = new SelectedMenu("Adatbázisba helyezés", "Itt tudod a legenerált méréseket adatbázisba helyezni!", "", 4);
-            selectedMenus[5] = new SelectedMenu("LINQ lekérdezések", "Itt tudod megnézni az előre megírt LINQ-s lekérdezéseket!", "", 5);
-            currentSelectedMenuIndex = 0;
-            inSelectedMenu = false;
-        }
 
         public MainMenu(List<Sensor> lista)
         {
-            selectedMenus = new SelectedMenu[6];
+            selectedMenus = new SelectedMenu[7];
             selectedMenus[0] = new SelectedMenu("Motor Szenzor Értékek", "Itt tudod a legenerált a motor szenzorok értékét megnézni!", "", 0);
             selectedMenus[1] = new SelectedMenu("Fék Szenzor Értékek", "Itt tudod a legenerált a fék szenzorok értékét megnézni!", "", 1);
             selectedMenus[2] = new SelectedMenu("Kerék Szenzor Értékek", "Itt tudod a legenerált a kerék szenzorok értékét megnézni!", "", 2);
             selectedMenus[3] = new SelectedMenu("JSON fájlba kiíratás", "Itt tudod kiíratni az eddigi mérés adatait .json fájlba!", "", 3);
             selectedMenus[4] = new SelectedMenu("Adatbázisba helyezés", "Itt tudod a legenerált méréseket adatbázisba helyezni!(XML)", "", 4);
             selectedMenus[5] = new SelectedMenu("LINQ lekérdezések", "Itt tudod megnézni az előre megírt LINQ-s lekérdezéseket!", "", 5);
+            selectedMenus[6] = new SelectedMenu("Adatbázisba mentés", "Itt tudod elmenteni adatbázisba az eddigi méréseket!", "", 6);
             currentSelectedMenuIndex = 0;
             inSelectedMenu = false;
-            meresek.AddRange(lista);
+            if (lista.Count()>0)
+            {
+                meresek.AddRange(lista);
+            }
+            else
+            {
+                meresek = lista;
+            }
         }
 
         public void MainMenuRunning()
@@ -597,4 +674,7 @@ namespace SensorSystem
         }
     }
     #endregion
+
+   
+
 }
