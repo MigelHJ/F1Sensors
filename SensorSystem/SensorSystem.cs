@@ -327,13 +327,12 @@ namespace SensorSystem
             List<Sensor> adatb = new List<Sensor>();
             try
             {
-                string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;" +
-                "AttachDbFilename=C:\\Users\\vorak\\Source\\Repos\\MigelHJ\\F1Sensors\\F1Sensors\\Meresek.mdf;" +
-                "Integrated Security=True";
+                string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\vorak\source\repos\MigelHJ\F1Sensors\F1Sensors\Meresek.mdf;Integrated Security=True";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string query = "select * from meresek";
+                    string query = "select * from Szenzorok";
                     SqlCommand command = new SqlCommand(query, connection);
 
                     SqlDataReader reader = command.ExecuteReader();
@@ -376,20 +375,26 @@ namespace SensorSystem
                     }
                 }
 
-                string query2 = "INSERT INTO Sensors (szenzorAzon, szenzorTipus, szenzorErtek, szenzorErtekTartomany, mertekEgyseg, szenzorHely) " + "VALUES (@szenzorAzon, @szenzorTipus, @szenzorErtek, @szenzorErtekTartomany, @mertekEgyseg, @szenzorHely)";
+                string query2 = "INSERT INTO Szenzorok (szenzorAzon, szenzorTípus, szenzorErtek, szenzorErtekTartomany, mertekEgyseg, szenzorHely) VALUES (@szenzorAzon, @szenzorTípus, @szenzorErtek, @szenzorErtekTartomany, @mertekEgyseg, @szenzorHely)";
 
-                foreach (var i in kilista)
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    using (SqlCommand command2 = new SqlCommand(query2, new SqlConnection(connectionString)))
+                    connection.Open();
+                    foreach (var i in kilista)
                     {
-                        command2.Parameters.AddWithValue("@szenzorAzon", i.szenzorAzon);
-                        command2.Parameters.AddWithValue("@szenzorTipus", i.szenzorTípus);
-                        command2.Parameters.AddWithValue("@szenzorErtek", i.szenzorErtek);
-                        command2.Parameters.AddWithValue("@szenzorErtekTartomany", i.szenzorErtekTartomany);
-                        command2.Parameters.AddWithValue("@mertekEgyseg", i.mertekEgyseg);
-                        command2.Parameters.AddWithValue("@szenzorHely", i.szenzorHely);
+                        using (SqlCommand command2 = new SqlCommand(query2, connection))
+                        {
+                            command2.Parameters.AddWithValue("@szenzorAzon", i.szenzorAzon);
+                            command2.Parameters.AddWithValue("@szenzorTípus", i.szenzorTípus);
+                            command2.Parameters.AddWithValue("@szenzorErtek", i.szenzorErtek);
+                            command2.Parameters.AddWithValue("@szenzorErtekTartomany", i.szenzorErtekTartomany);
+                            command2.Parameters.AddWithValue("@mertekEgyseg", i.mertekEgyseg);
+                            command2.Parameters.AddWithValue("@szenzorHely", i.szenzorHely);
+                            command2.ExecuteNonQuery();
+                        }
                     }
-                }                
+                }
+                Console.WriteLine("Adatbázisba való kiírás megtörtént! :)");
             }
             catch (Exception ex)
             {
@@ -674,7 +679,4 @@ namespace SensorSystem
         }
     }
     #endregion
-
-   
-
 }

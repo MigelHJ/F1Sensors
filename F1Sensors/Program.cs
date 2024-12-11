@@ -16,13 +16,11 @@ namespace F1Sensors
         static void Main(string[] args)
         {
             List<Sensor> meresek = new List<Sensor>();
-            string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;" +
-                "AttachDbFilename=C:\\Users\\vorak\\Source\\Repos\\MigelHJ\\F1Sensors\\F1Sensors\\Meresek.mdf;" +
-                "Integrated Security=True";
+            string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\vorak\source\repos\MigelHJ\F1Sensors\F1Sensors\Meresek.mdf;Integrated Security=True";
             using (SqlConnection connection= new SqlConnection(connectionString))
             {
                 connection.Open();
-                string query = "select * from meresek";
+                string query = "select * from szenzorok";
                 SqlCommand command = new SqlCommand(query,connection);
 
                 SqlDataReader reader = command.ExecuteReader();
